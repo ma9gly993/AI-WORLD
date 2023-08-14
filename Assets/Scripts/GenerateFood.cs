@@ -26,7 +26,7 @@ public class GenerateFood : MonoBehaviour
             for (int i = 0; i+1 < countFoodSpawn; i++)
             {
                 
-                Vector3 spawnPos = new Vector3(Random.Range(-100.0f, 110.0f), 2.2f, Random.Range(-70.0f, 80.0f));
+                Vector3 spawnPos = new Vector3(Random.Range(-110.0f, 110.0f), 2.2f, Random.Range(-39.0f, 123.0f));
                 GameObject newFood = Instantiate(food, spawnPos, Quaternion.identity);
                 newFood.transform.parent = gameObject.transform;
                 StartCoroutine(destroyFood(newFood));

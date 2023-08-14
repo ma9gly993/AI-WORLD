@@ -6,9 +6,11 @@ TagManager:
   tags:
   - food
   - water
-  - not_water
   - barrier
   - agent
+  - desert
+  - snow
+  - grass
   layers:
   - Default
   - TransparentFX

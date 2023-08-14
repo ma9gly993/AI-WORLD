@@ -164,6 +164,9 @@ MonoBehaviour:
   legs: 0
   eyesLVL: 0
   isCanDuplicate: 0
+  temperatureResistanceHot: 26
+  temperatureResistanceCold: 10
+  temperature: 0
   genTag: 
   structLayers: 040000000300000006000000
   Brain: {fileID: 0}

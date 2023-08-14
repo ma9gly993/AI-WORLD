@@ -15,6 +15,7 @@ public class AgentClass : MonoBehaviour
     public int secToEnergyMinus = 3;
     public int age = 0;
 
+    // mutation list
     public int angleVision = 120;
     public int countRaysInEye = 3;  // must be > 1
     public int ageToDuplicate = 5;
@@ -25,6 +26,10 @@ public class AgentClass : MonoBehaviour
     public bool legs = false;
     public int eyesLVL = 1;
     public bool isCanDuplicate = false;
+    public int temperatureResistanceHot = 0;
+    public int temperatureResistanceCold = 0;
+    public int temperature = 0;
+
         
     public string genTag;  // ex. xyxxxkjjjv 
 
@@ -115,9 +120,10 @@ public class AgentClass : MonoBehaviour
         
 
         // TODO: 
-        /// 1) глаза переписать под углы
+        /// 1) глаза переписать под углы  +
         /// 2) нейронка из родителя такая же  + 
-        /// 3) способность развивать нейросеть (скиллпоинты)
+        /// 3) способность развивать (скиллпоинты)
+        /// 3.1) mutate layers ai
         /// 4) нейронка от 0 до 1 функции активации  +/-
         /// 5) мутации на нейронку поставить чтоб развиваться
         /// 6) самообучение агента
@@ -128,14 +134,17 @@ public class AgentClass : MonoBehaviour
         /// 10) больше информации с глаз
         /// 11) ПОФИКСИТЬ СОЗДАНИЕ НС чтобы каждый раз
         ///     не подстраивать под количество глаз и  тд.
-        /// 12) дать возможность не двигаться и не поворачиваться
+        /// 12) дать возможность не двигаться и не поворачиваться   
+        /// 13) разная температура на островах
+        /// 14) мутация на устойчивость к температуре
+        /// 15) штраф за мутацию
 
 
 
     }
     int[] GetActionFromBrain()
     {
-        inputs = new float[12 + countRaysInEye * 2];
+        inputs = new float[15 + countRaysInEye * 2];
         inputs[0] = health;
         inputs[1] = energy;
         inputs[2] = energyMinus;
@@ -148,6 +157,9 @@ public class AgentClass : MonoBehaviour
         inputs[9] = isOnFood ? 1 : 0;
         inputs[10] = age;
         inputs[11] = ageToDuplicate;
+        inputs[12] = temperature;
+        inputs[13] = temperatureResistanceCold;
+        inputs[14] = temperatureResistanceHot;
         
         float[] eyeInputs = getDataFromEye();
         for (int i = 0; i < countRaysInEye * 2; i++)
@@ -181,7 +193,7 @@ public class AgentClass : MonoBehaviour
                     newChild.SetActive(false);
 
                     AgentClass nnNewChild = newChild.GetComponent<AgentClass>();
-                    int[] structLayers = new int[] { 12+nnNewChild.countRaysInEye*2, 8, 8, 6 };
+                    int[] structLayers = new int[] { 15+nnNewChild.countRaysInEye*2, 8, 8, 6 };
                     nnNewChild.Brain = new AgentNeuralNetwork(structLayers);
                     Brain.copy(nnNewChild.Brain);
                     nnNewChild.Brain.Mutate(10, 0.5f);
@@ -240,7 +252,7 @@ public class AgentClass : MonoBehaviour
 
     void AddMutation()
     {
-        int typeMutation = Random.Range(0, 7);
+        int typeMutation = Random.Range(0, 13);
         int LVLMutation = Random.Range(-1,2);
         if (typeMutation == 1) atackPowerLVL += LVLMutation;
         else if (typeMutation == 2) defenseLVL += LVLMutation;
@@ -248,11 +260,23 @@ public class AgentClass : MonoBehaviour
         else if (typeMutation == 4) eyesLVL += LVLMutation;
         else if (typeMutation == 5) legs = !legs;
         else if (typeMutation == 6) isCanDuplicate = !isCanDuplicate;
+        else if (typeMutation == 7) angleVision += LVLMutation * 10;
+        //else if (typeMutation == 8) countRaysInEye += LVLMutation;
+        else if (typeMutation == 9) ageToDuplicate += LVLMutation;
+        else if (typeMutation == 10) rotationLVL += LVLMutation; 
+        else if (typeMutation == 11) temperatureResistanceHot += LVLMutation*10;
+        else if (typeMutation == 12) temperatureResistanceCold += LVLMutation*10;
+
 
         if (atackPowerLVL < 0) atackPowerLVL = 0;
         if (defenseLVL < 0) defenseLVL = 0;
         if (speedLVL < 0) speedLVL = 0;
         if (eyesLVL < 0) eyesLVL = 0;
+        if (angleVision < 0) angleVision = 0;
+        if (angleVision > 300) angleVision = 300;
+        //if (countRaysInEye < 2) countRaysInEye = 2;
+        if (ageToDuplicate < 0) ageToDuplicate = 0;
+        if (rotationLVL < 0) rotationLVL = 0;
     }
 
     void eatFood()
@@ -284,16 +308,22 @@ public class AgentClass : MonoBehaviour
 
     float calcEnergyMinus()
     {
-        float kAtack = 2f, kDef = 2f, kSpeed = 2f, kLegs = 2f, kEyes = 2f;
-        float resLegs = 0f;
+        float resLegs = 0f, resIsCanDuplicate = 0f;
+
+        float kAtack = 2f, kDef = 2f, kSpeed = 5f, kLegs = 2f, kEyes = 2f, kIsCanDuplicate = 1f;
+        float kAngleVision = 0.05f, kCountRaysInEye = 0.5f, kAgeToDuplicate = -1f, kRotation = 0.25f;
+
         if (legs) resLegs += kLegs;
-        return kAtack * atackPowerLVL + kDef * defenseLVL + kSpeed * speedLVL + kEyes * eyesLVL + resLegs;
+        if (isCanDuplicate) resIsCanDuplicate += kIsCanDuplicate;
+        float minusEnergy = kAtack * atackPowerLVL + kDef * defenseLVL + kSpeed * speedLVL + kEyes * eyesLVL + resLegs + resIsCanDuplicate
+                      + kAngleVision * angleVision + kCountRaysInEye * countRaysInEye + kAgeToDuplicate * ageToDuplicate + kRotation * rotationLVL;
+        return minusEnergy;
     }
 
     void calcMoveSpeed()
     {
         moveSpeed = .2f * speedLVL;
-        rotationSpeed = 4f * rotationLVL;
+        rotationSpeed = 2f * rotationLVL;
     }
 
     private IEnumerator energyMinusEverySec(float sec)
@@ -306,9 +336,11 @@ public class AgentClass : MonoBehaviour
             {
                 health += energy;
             }
+
+            if (temperature > temperatureResistanceHot) health -= (temperature - temperatureResistanceHot);
+            if (temperature < temperatureResistanceCold) health -= (temperatureResistanceCold - temperature);
             // age
             age++;
-
         }
     }
 
@@ -316,15 +348,36 @@ public class AgentClass : MonoBehaviour
     {
         if (collision.gameObject.tag == "barrier")
         {
-            transform.position = new Vector3(Random.Range(-25.0f, 30f), 2.2f, Random.Range(-65.0f, -2f));
+            transform.position = new Vector3(Random.Range(0f, 30f), 2.2f, Random.Range(-40.0f, 0f));
         }
         // Debug.Log(collision.gameObject.name);
-        if ( collision.gameObject.tag == "not_water")
+        if ( collision.gameObject.tag != "water")
         {
             if (!legs)
             {
-                transform.position = new Vector3(Random.Range(-25.0f, 30f), 2.2f, Random.Range(-65.0f, -2f));
+                transform.position = new Vector3(Random.Range(0f, 30f), 2.2f, Random.Range(-40.0f, 0f));
             }
+        }
+
+        if (collision.gameObject.tag == "desert")
+        {
+            temperature = 40;
+            Debug.Log(this.name + " desert");
+        }
+
+        else if (collision.gameObject.tag == "snow")
+        {
+            temperature = -20;
+        }
+
+        else if (collision.gameObject.tag == "water")
+        {
+            temperature = 20;
+        }
+
+        else if (collision.gameObject.tag == "grass")
+        {
+            temperature = 25;
         }
     }
 
@@ -335,6 +388,8 @@ public class AgentClass : MonoBehaviour
             isOnFood = true;   
             lastFood = other.gameObject;
         }
+
+        
     }
 
     private void OnTriggerExit(Collider other)

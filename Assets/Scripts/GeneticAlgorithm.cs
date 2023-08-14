@@ -24,10 +24,10 @@ public class GeneticAlgorithm : MonoBehaviour
         {
             for (int i = 0; i  < countAgentSpawn; i++)
             {
-                Vector3 spawnPos = new Vector3(Random.Range(-25.0f, 30f), 2.2f, Random.Range(-65.0f, -2f));
+                Vector3 spawnPos = new Vector3(Random.Range(0f, 30f), 2.2f, Random.Range(-40.0f, 0f));
                 AgentClass newAgent = (Instantiate(agent, spawnPos, Quaternion.identity)).GetComponent<AgentClass>();
 
-                int[] structLayers = new int[] { 12 + newAgent.countRaysInEye * 2, 8, 8, 6 };
+                int[] structLayers = new int[] { 15 + newAgent.countRaysInEye * 2, 8, 8, 6 };
 
                 newAgent.Brain = new AgentNeuralNetwork(structLayers);
                 newAgent.health = 100; newAgent.energy = 100; agentSpawned++;
