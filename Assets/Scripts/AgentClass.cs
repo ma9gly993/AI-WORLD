@@ -32,6 +32,7 @@ public class AgentClass : MonoBehaviour
     float moveVertical;
     float moveSpeed;
     float rotationSpeed;
+    int childCount = 0;
 
     bool isOnFood = false;
     GameObject lastFood;
@@ -64,6 +65,10 @@ public class AgentClass : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!isAlive)
+        {
+            Destroy(gameObject);
+        }
         if (health <= 0)
         {
             isAlive = false;
@@ -170,6 +175,7 @@ public class AgentClass : MonoBehaviour
                 if (energy > 20)
                 {
                     Debug.Log("SMTH WAS BORN. Parent: " + gameObject.name + " Energy: " + energy);
+                    childCount += 1; 
                     Vector3 spawnPos = transform.position; spawnPos.x += 3f; spawnPos.z += 3f;
                     GameObject newChild = Instantiate(gameObject, spawnPos, Quaternion.identity);
                     newChild.SetActive(false);
@@ -179,6 +185,7 @@ public class AgentClass : MonoBehaviour
                     nnNewChild.Brain = new AgentNeuralNetwork(structLayers);
                     Brain.copy(nnNewChild.Brain);
                     nnNewChild.Brain.Mutate(10, 0.5f);
+                    nnNewChild.name = this.name + "_" + childCount.ToString();
 
                     newChild.SetActive(true);
                     energy -= 20;
@@ -286,7 +293,7 @@ public class AgentClass : MonoBehaviour
     void calcMoveSpeed()
     {
         moveSpeed = .2f * speedLVL;
-        rotationSpeed = 2f * rotationLVL;
+        rotationSpeed = 4f * rotationLVL;
     }
 
     private IEnumerator energyMinusEverySec(float sec)
