@@ -30,6 +30,8 @@ public class AgentClass : MonoBehaviour
     public int temperatureResistanceCold = 0;
     public int temperature = 0;
 
+    public int deb = 0;
+
         
     public string genTag;  // ex. xyxxxkjjjv 
 
